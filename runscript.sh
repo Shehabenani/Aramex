@@ -22,29 +22,46 @@ error() {
     exit 1
 }
 
-log "Building frontend Docker image ..."
+# Create a Docker network if it doesn't exist
+log "Creating Docker network..."
+docker network create aramex-network 2>/dev/null || true
+
+# Start MongoDB container
+log "Starting MongoDB container..."
+docker run -d --name mongodb \
+    --network aramex-network \
+    -p 27017:27017 \
+    mongo || error "Failed to start MongoDB container!"
+
+log "Building frontend Docker image..."
 (
     cd AramexFrontEnd || error "AramexFrontEnd directory not found!"
     docker build -t aramex-frontend . || error "Failed to build the frontend Docker image!"
-    # docker run -d -p 4000:4000 aramex-frontend
 )
 
-log "starting the aramex-frontend container ..."
-docker run -d -p 4000:4000 aramex-frontend || error "Failed to start the frontend container!"
+log "Starting the aramex-frontend container..."
+docker run -d --name aramex-frontend \
+    --network aramex-network \
+    -p 4000:4000 \
+    aramex-frontend || error "Failed to start the frontend container!"
 
-log "Building backend image.."
+log "Building backend image..."
 (
-    cd Backend || error "Backend directort not found!"
+    cd Backend || error "Backend directory not found!"
     docker build -t aramex-backend . || error "Failed to build the backend Docker image!"
-    # docker run -d -p 8000:8000 -e MONGO_URL='mongodb+srv://mohamedsolimanfcai:Ashraf_123@aramex.6k45j.mongodb.net/?retryWrites=true&w=majority&appName=Aramex' aramex-backend
 )
 
-log "starting the aramex-backend container ..."
-docker run -d -p 8000:8000 -e MONGO_URL='mongodb+srv://mohamedsolimanfcai:Ashraf_123@aramex.6k45j.mongodb.net/?retryWrites=true&w=majority&appName=Aramex' aramex-backend || error "Failed to start the backned container!"
+log "Starting the aramex-backend container..."
+docker run -d --name aramex-backend \
+    --network aramex-network \
+    -p 8000:8000 \
+    -e MONGO_URL='mongodb://mongodb:27017' \
+    aramex-backend || error "Failed to start the backend container!"
 
 log "Verifying each container status..."
-docker ps --filter "name=aramex-*" || warn "Some containers may not be running as expected."
+docker ps --filter "network=aramex-network" || warn "Some containers may not be running as expected."
 
-log "All containers are running. Access the application at http://localhost:4000"
+log "All containers are running."
+log "Frontend is accessible at http://localhost:4000"
 log "Backend API is accessible at http://localhost:8000"
-log "Whitelist your ip address in https://cloud.mongodb.com/v2/671b96bd77b36861cd688edf#/metrics/replicaSet/671b9771cd7fde58e4271c22/explorer/user_db/order_collection/find"
+log "MongoDB is running locally at mongodb://localhost:27017"

@@ -1,42 +1,34 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-app=FastAPI()
-
-from routes.route import router
-
-app.include_router(router)
-
-origins = [
-    "*",  
-]
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,  
-    allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"],  
-)
-
-
 import os
 from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
 from dotenv import load_dotenv
 
-load_dotenv()  #loading environment variables from .env file
+app = FastAPI()
 
-MONGO_URL = os.getenv("MONGO_URL")
+from routes.route import router
+app.include_router(router)
 
-uri = MONGO_URL
+# CORS configuration
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-client = MongoClient(uri, server_api=ServerApi('1'))
+# MongoDB configuration
+load_dotenv()
 
-#confirm a successful connection
+# Use environment variable with fallback for local MongoDB
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://mongodb:27017")
+client = MongoClient(MONGO_URL)
+
+# Test connection
 try:
     client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
+    print("Successfully connected to MongoDB!")
 except Exception as e:
-    print(e)
+    print(f"Failed to connect to MongoDB: {e}")
