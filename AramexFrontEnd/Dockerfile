@@ -1,16 +1,16 @@
-FROM node:20.15-alpine AS build
+FROM node:latest AS build
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 
-RUN npm run build
+RUN npm run build --prod
 
-FROM nginx:alpine
+FROM nginx:latest
 
 COPY --from=build /app/dist/aramex /usr/share/nginx/html
 
