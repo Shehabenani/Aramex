@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --configuration production --source-map=false --vendor-chunk --aot",
+    "build": "ng build --configuration production --source-map=false --aot",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:Aramex": "node dist/aramex/server/server.mjs"
